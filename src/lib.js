@@ -12,8 +12,8 @@ const _ = require('lodash');
 let templates;
 
 async function generate(proto, outdir, force) {
-  const tmpdir = outdir + ".tmp";
-  await initializeTemplate(tmpdir, force);
+  //const tmpdir = outdir + ".tmp";
+  await initializeTemplate(outdir, force);
 
   if (templates === undefined) {
     templates = loadFunctionTemplates();
@@ -28,16 +28,26 @@ async function generate(proto, outdir, force) {
   });
 
   const packages = grpc.loadPackageDefinition(packageDefinition);
-  
+
+  await generatePackageJson(proto, outdir, force);
+
   for (let [pkgname, pkg] of Object.entries(packages)) {
-    for (let servicename of Object.keys(pkg)) {
-      let { service } = pkg[servicename];
-      await generateService(service, tmpdir, {
-        proto,
-        pkgname,
-        servicename,
-      });
+    let service, servicename;
+    let keys = Object.keys(pkg);
+    if (keys.length === 1) {
+      servicename = keys[0];
+      ({ service } = pkg[servicename]);
+    } else {
+      servicename = pkgname;
+      pkgname = "";
+      ({ service } = pkg);
     }
+
+    await generateService(service, outdir, {
+      proto,
+      pkgname,
+      servicename,
+    });
   }
 }
 
@@ -52,13 +62,17 @@ function mkdirSync(path) {
   }
 }
 
+function checkFileExists(filename) {
+  if (fs.existsSync(filename)) {
+    console.error(`Error: Would overwrite existing file '${filename}'.\n` +
+                  "       Use --force to enable file overwrites.");
+    process.exit(1);
+  }
+}
+
 function copyFileSync(a, b, force) {
   if (!force) {
-    if (fs.existsSync(b)) {
-      console.error(`Error: Would overwrite existing file '${b}'.\n` +
-                    "       Use --force to enable file overwrites.");
-      process.exit(1);
-    }
+    checkFileExists(b);
   }
   fs.copyFileSync(a, b);
 }
@@ -74,13 +88,25 @@ async function initializeTemplate(outdir, force) {
   mkdirSync(path.join(outdir, "src", "services", "functions"));
 
   let template_path = getTemplatePath();
-  copyFileSync(path.join(template_path, 'package.json'),
-               path.join(outdir,        'package.json'),
-               force
-  );
   copyFileSync(path.join(template_path, 'src', 'package.js'),
                path.join(outdir,        'src', 'package.js'),
                force
+  );
+}
+
+async function generatePackageJson(proto, outdir, force) {
+  let template_path = getTemplatePath();
+  let protoname = path.basename(proto).replace(/\.proto$/g, '');
+  let outfile = path.join(outdir, 'src', 'package.js');
+  if (!force) {
+    checkFileExists(outfile);
+  }
+  let text = await readFile(path.join(template_path, 'package.json'), 'utf8');
+  text = _.template(text)({ protoname });
+  await writeFile(
+    path.join(outdir, 'package.json'),
+    text,
+    { mode: 0600 }
   );
 }
 
@@ -120,6 +146,14 @@ async function loadFunctionTemplates() {
 
   await Promise.all(promises);
   return templates;
+}
+
+function dot(pkg) {
+  if (!!pkg) {
+    return pkg + '.';
+  } else {
+    return "";
+  }
 }
 
 async function generateService(service, outdir, ctx) {
@@ -162,7 +196,7 @@ async function generateService(service, outdir, ctx) {
     promises.push((async function(func) {
       await writeFile(
         path.join(outdir, "src", "services", "functions",
-                  `${ctx.pkgname}.${ctx.servicename}.${func.grpcname}.js`
+                  `${dot(ctx.pkgname)}${ctx.servicename}.${func.grpcname}.js`
         ),
         func.code,
         { mode: 0600 }

@@ -1,5 +1,8 @@
 {
-  "name": "proxy",
+  "name": "<%= protoname %>-grpc-proxy",
+  "bin": {
+    "<%= protoname %>-grpc-proxy": "./bin/cli.js"
+  },
   "version": "1.0.0",
   "dependencies": {
     "@grpc/proto-loader": "^0.3.0",
