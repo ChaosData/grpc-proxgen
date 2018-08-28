@@ -1,0 +1,13 @@
+{
+  "name": "grpc-proxgen",
+  "version": "1.0.0",
+  "bin": {
+    "grpc-proxgen": "./bin/cli.js"
+  },
+  "dependencies": {
+    "@grpc/proto-loader": "^0.3.0",
+    "commander": "^2.15.1",
+    "grpc": "^1.14.0",
+    "lodash.template": "^4.4.0"
+  }
+}
