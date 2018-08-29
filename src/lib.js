@@ -9,7 +9,8 @@ const protoLoader = require('@grpc/proto-loader');
 
 const _ = require('lodash');
 
-let templates;
+let templates; // function templates
+let service_template;
 
 async function generate(proto, outdir, force) {
   //const tmpdir = outdir + ".tmp";

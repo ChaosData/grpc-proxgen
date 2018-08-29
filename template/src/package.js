@@ -65,13 +65,26 @@ function addService(protoname, pkgname, servicename, functions) {
 
 let hosts = { };
 
+function under(pkg) {
+  if (!!pkg) {
+    return pkg + '_';
+  } else {
+    return "";
+  }
+}
+
 function setDefaultHostPort(pkgname, servicename, host_port) {
-  const key = `${pkgname}_${servicename}`;
+  let key;
+  if (servicename === null) {
+    key = pkgname;
+  } else {
+    key = `${under(pkgname)}${servicename}`;
+  }
   hosts[key] = host_port;
 }
 
 function getDefaultHostPort(pkgname, servicename) {
-  const key = `${pkgname}_${servicename}`;
+  const key = `${under(pkgname)}${servicename}`;
   if (!(key in hosts)) {
     console.error(`Error: Default host:port not set for '${pkgname}.${servicename}'. Set with --${key}.`);
     process.exit(1);
@@ -124,4 +137,6 @@ module.exports = {
   addService,
   getClient,
   copyheaders,
+  setDefaultHostPort,
+  getDefaultHostPort
 }
