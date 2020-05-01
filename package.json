@@ -5,9 +5,10 @@
     "grpc-proxgen": "./bin/cli.js"
   },
   "dependencies": {
-    "@grpc/proto-loader": "^0.3.0",
-    "commander": "^2.15.1",
-    "grpc": "^1.14.0",
-    "lodash.template": "^4.4.0"
+    "@grpc/proto-loader": "^0.5.4",
+    "commander": "^5.1.0",
+    "fs-extra": "^9.0.0",
+    "grpc": "^1.24.2",
+    "lodash.template": "^4.5.0"
   }
 }

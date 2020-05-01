@@ -18,7 +18,7 @@ const str = JSON.stringify;
  *                                value.
  */
 module.exports = function (service_call) {
-  let metadata = copyheaders(service_call.metadata);
+  let metadata = package.copyheaders(service_call.metadata);
   let request_object = service_call.request;
   console.log("<%= funcname %> called with: " + str(request_object));
   var client_call = client['<%= funcname %>'](request_object, metadata);

@@ -1,3 +1,4 @@
+const path = require('path');
 
 const grpc = require('grpc');
 const protoLoader = require('@grpc/proto-loader');
@@ -13,7 +14,7 @@ function getPackage(proto_name) {
   if (proto_name.startsWith('./')) {
     PROTO_PATH = proto_name;
   } else {
-    PROTO_PATH = __dirname + '/protos/' + proto_name;
+    PROTO_PATH = path.join(__dirname, '..', 'config', 'protos', proto_name);
   }
 
   const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
@@ -42,6 +43,7 @@ function pathIndex(obj,is, value) {
   }
 }
 
+/*
 function getServer(protoname, pkgname, servicename, functions) {
   let pkg = pathIndex(getPackage(protoname), pkgname);
 
@@ -49,18 +51,75 @@ function getServer(protoname, pkgname, servicename, functions) {
   server.addProtoService(pkg[servicename].service, functions);
   return server;
 }
+*/
+
+const server = new grpc.Server();
+
+function getServer() {
+  return server;
+}
+
+function addService(protoname, pkgname, servicename, functions) {
+  let pkg = pathIndex(getPackage(protoname), pkgname);
+  getServer().addProtoService(pkg[servicename].service, functions);
+}
+
+let hosts = { };
+let default_upstream = null;
+
+function under(pkg) {
+  if (!!pkg) {
+    return pkg + '_';
+  } else {
+    return "";
+  }
+}
+
+function setOverrideUpstream(pkgname, servicename, host_port) {
+  let key;
+  if (servicename === null) {
+    key = pkgname;
+  } else {
+    key = `${under(pkgname)}${servicename}`;
+  }
+  hosts[key] = host_port;
+}
+
+function overrideUpstream(upstream_host_port) {
+  default_upstream = upstream_host_port
+}
+
+function getOverrideUpstream(pkgname, servicename) {
+  if (default_upstream !== null) {
+    return default_upstream;
+  }
+
+  const key = `${under(pkgname)}${servicename}`;
+  if (!(key in hosts)) {
+    // console.error(`Error: Default host:port not set for '${pkgname}.${servicename}'. Set with --${key}.`);
+    // process.exit(1);
+    return null;
+  }
+  return hosts[key];
+}
 
 let clients = { };
 
-function getClient(protoname, pkgname, servicename, host_port) {
-  const key = `${pkgname}.${servicename}_${host_port}`;
+function getClient(protoname, pkgname, servicename, upstream_host_port) {
+  let override_upstream = getOverrideUpstream(pkgname, servicename);
+  if (override_upstream !== null) {
+    upstream_host_port = override_upstream;
+  }
+
+  const key = `${pkgname}.${servicename}_${upstream_host_port}`;
 
   if (key in clients) {
     return clients[key];
   }
 
+
   let pkg = pathIndex(getPackage(protoname), pkgname);
-  let client = new pkg[servicename](host_port, grpc.credentials.createInsecure());
+  let client = new pkg[servicename](upstream_host_port, grpc.credentials.createInsecure());
 
   clients[key] = client;
   return client;
@@ -87,6 +146,10 @@ function copyheaders(original_metadata) {
 
 module.exports = {
   getServer,
+  addService,
   getClient,
   copyheaders,
+  setOverrideUpstream,
+  overrideUpstream,
+  getOverrideUpstream
 }

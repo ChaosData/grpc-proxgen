@@ -5,8 +5,8 @@
   },
   "version": "1.0.0",
   "dependencies": {
-    "commander": "^2.15.1",
-    "@grpc/proto-loader": "^0.3.0",
-    "grpc": "^1.14.0",
+    "grpc": "^1.24.2",
+    "@grpc/proto-loader": "^0.5.4",
+    "commander": "^5.1.0"
   }
 }

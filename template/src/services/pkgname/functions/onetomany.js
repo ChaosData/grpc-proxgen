@@ -1,10 +1,10 @@
-const utils = require('../utils');
+const utils = require('../../../utils');
 
-var client = utils.getClient(
+let client = utils.getClient(
   '<%= proto %>',
   '<%= pkgname %>',
   '<%= servicename %>',
-  '<%= upstream_host_port %>'
+  '<%= default_upstream %>'
 );
 
 const str = JSON.stringify;

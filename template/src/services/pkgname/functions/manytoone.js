@@ -1,10 +1,10 @@
-const package = require('../package');
+const utils = require('../../../utils');
 
-var client = package.getClient(
+let client = utils.getClient(
   '<%= proto %>',
   '<%= pkgname %>',
   '<%= servicename %>',
-  '<%= host_port %>'
+  '<%= default_upstream %>'
 );
 
 const str = JSON.stringify;
@@ -17,7 +17,7 @@ const str = JSON.stringify;
  *                                                    response to
  */
 module.exports = function (service_call, callback) {
-  let metadata = package.copyheaders(service_call.metadata);
+  let metadata = utils.copyheaders(service_call.metadata);
   var client_call = client['<%= funcname %>'](
       metadata, function(error, response_object) {
     if (error) {

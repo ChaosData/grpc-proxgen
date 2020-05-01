@@ -15,7 +15,7 @@ const str = JSON.stringify;
  * @param {Duplex} service_call The stream for incoming and outgoing messages
  */
 module.exports = function(service_call) {
-  let metadata = copyheaders(service_call.metadata);
+  let metadata = package.copyheaders(service_call.metadata);
   let client_call = client['<%= funcname %>'](metadata);
   client_call.on("data", function(response_object) {
     console.log(
@@ -25,7 +25,6 @@ module.exports = function(service_call) {
   });
   client_call.on("error", function(e) {
     console.log("<%= funcname %> received error output of: " + e);
-    //???
   });
   client_call.on("end", function() {
     service_call.end();

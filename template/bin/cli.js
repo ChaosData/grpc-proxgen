@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
-let program = require('commander');
 const version = require('../package.json').version;
+const config = require('../config/config.json');
 
-const package = require('../src/package');
+const utils = require('../src/utils');
 const lib = require('../src/lib');
+
+let program = require('commander');
 
 main().catch((err)=>{
   console.error(err);
@@ -12,43 +14,24 @@ main().catch((err)=>{
 });
 
 async function main() {
-  let service_config; // array
-  try {
-    service = JSON.parse('<%= service_config_json %>');
-  } catch (e) {
-    console.error(e);
-    program.exit(1);
-  }
-
   let p = program
-          .version(version)
-          .usage('[options] <bind host:port>');
-    //.option('--routeguide_RouteGuide <host_port>',
-    //        'Upstream <host:port> for routeguide.RouteGuide')
+    .version(version)
+    .usage('[options]')
   try {
-    for (let svc of service_config) {
-      p = p.option(svc.arg, svc.desc);
+    for (let opt of Object.keys(config)) {
+      p = p.option(config[opt].arg[0], config[opt].arg[1], config[opt].value);
     }
   } catch (e) { }
-  p.arguments("<bind host:port>")
-   .parse(process.argv);
+  p.parse(process.argv);
 
-  if (program.args.length > 1) {
-    console.error("Error: More than one bind <host:port> provided.")
-    program.help();
-  } else if (program.args.length == 0) {
-    console.error("Error: Missing bind <host:port>")
+  if (program.args.length > 0) {
+    // console.error("Error: More than one bind <host:port> provided.")
     program.help();
   }
 
-  for (let svc of service_config) {
-    let name = svc.argname;
-    if (!program[name] || program[name] === 0) {
-      console.error("Error: Missing ${svc.arg}");
-      program.help();
-    }
-    package.setDefaultHostPort(name, null, program[name]);
+  if (program.upstream !== undefined) {
+    utils.overrideUpstream(program.upstream);
   }
 
-  await lib.startServer(service_config);
+  await lib.startServer(program.bind);
 }
